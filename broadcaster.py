@@ -23,9 +23,10 @@ def add_plus_if_missing(string):
     return string
 
  
-
+# Function that execute the backend logic
 def execute_backend():
 
+    #il file deve essere un csv con le seguenti colonne: Nome (string), Cognome (string), Phone (string), Sent (boolean: si o no)
     contacts = pd.read_excel("Contacts.xlsx")
 
     list = contacts.iloc[:, 2]
