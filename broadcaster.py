@@ -13,7 +13,8 @@ from tkinter import ttk
 import threading
 
  
-
+# the input string is mean to be a phone number. the function check if there is the +. 
+# If n
 def add_plus_if_missing(string):
 
     if not string.startswith("+"):
