@@ -1,20 +1,15 @@
 import pywhatkit
-
 import datetime
-
+import os
 import time
-
 import pandas as pd
-
 import tkinter as tk
-
 from tkinter import ttk
-
 import threading
 
  
 # the input string is mean to be a phone number. the function check if there is the +. 
-# If n
+# If no, add it manually
 def add_plus_if_missing(string):
 
     if not string.startswith("+"):
@@ -23,92 +18,105 @@ def add_plus_if_missing(string):
 
     return string
 
- 
+# fuction to get the path of the file
+def find_excel():
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "Contacts.xlsx")
+        print(str(current_dir))
+        return str(file_path)
+
+
 # Function that execute the backend logic
 def execute_backend():
-
+    try:
     #il file deve essere un csv con le seguenti colonne: Nome (string), Cognome (string), Phone (string), Sent (boolean: si o no)
-    contacts = pd.read_excel("Contacts.xlsx")
 
-    list = contacts.iloc[:, 2]
+        contacts = pd.read_excel(find_excel())
 
- 
+        list = contacts.iloc[:, 2]
 
-    # parse the setup file
+    
 
- 
+        # parse the setup file
 
-    c = 0
+    
 
-    for num in list:
+        c = 0
 
-        num = str(num)
+        for num in list:
 
-        num = add_plus_if_missing(num)
+            num = str(num)
 
-        print(num)
+            num = add_plus_if_missing(num)
 
-        try:
+            print(num)
 
-            if contacts.iloc[c, 3] == 'no': # il contatto non ha ancora ricevuto il messaggio
+            try:
 
-                if nome_img == None:
+                if contacts.iloc[c, 3] == 'no': # il contatto non ha ancora ricevuto il messaggio
 
-                    if "cliente" in testo:
+                    if nome_img == None:
 
-                        new_testo = testo.replace("cliente", contacts.iloc[c,0])
+                        if "cliente" in testo:
 
-                    else:
+                            new_testo = testo.replace("cliente", contacts.iloc[c,0])
 
-                        new_testo = testo
+                        else:
 
-                    # Invio solo messaggio di testo
+                            new_testo = testo
 
-                    now = datetime.datetime.now()
+                        # Invio solo messaggio di testo
 
-                    time.sleep(5)
+                        now = datetime.datetime.now()
 
-                    #pywhatkit.sendwhatmsg(num, new_testo, now.hour, int(now.minute)+2, 15, True, 10)
+                        time.sleep(5)
 
-                    pywhatkit.sendwhatmsg_instantly(num, new_testo, 15, True, 10)
+                        #pywhatkit.sendwhatmsg(num, new_testo, now.hour, int(now.minute)+2, 15, True, 10)
 
-                else:
-
-                    # Invio immagine + messaggio di testo
-
-                    if "cliente" in testo:
-
-                        new_testo = testo.replace("cliente", contacts.iloc[c,0])
+                        pywhatkit.sendwhatmsg_instantly(num, new_testo, 15, True, 10)
 
                     else:
 
-                        new_testo = testo
+                        # Invio immagine + messaggio di testo
 
-                    pywhatkit.sendwhats_image(num, nome_img, new_testo, 15, True, 16 )
+                        if "cliente" in testo:
 
-                # il messaggio è stato inviato allo specifico utente, settiamo il flag a 'si'
+                            new_testo = testo.replace("cliente", contacts.iloc[c,0])
 
-                contacts.at[c, "Sent"] = 'si'
+                        else:
+
+                            new_testo = testo
+
+                        pywhatkit.sendwhats_image(num, nome_img, new_testo, 15, True, 16 )
+
+                    # il messaggio è stato inviato allo specifico utente, settiamo il flag a 'si'
+
+                    contacts.at[c, "Sent"] = 'si'
+
+                    contacts.to_excel("Contacts.xlsx", index=False)
+
+                    time.sleep(10)
+
+            except Exception as e:
+
+                # qualcosa è andato storto, salviamo sull'excel tutti i contatti a cui siamo riusciti ad inviare so far
+
+                print(e)
 
                 contacts.to_excel("Contacts.xlsx", index=False)
 
-                time.sleep(10)
+            c += 1
 
-        except Exception as e:
+        # abbiamo finito la lista, resettiamo l'excel per un nuovo broadcast
 
-            # qualcosa è andato storto, salviamo sull'excel tutti i contatti a cui siamo riusciti ad inviare so far
+        contacts['Sent'] = 'no'
 
-            print(e)
+        contacts.to_excel("Contacts.xlsx", index=False)
+        update_ui_after_broadcast_sent()
+    except Exception as e:
+        print(e)
+        update_ui_after_broadcast_failed()
 
-            contacts.to_excel("Contacts.xlsx", index=False)
-
-        c += 1
-
-    # abbiamo finito la lista, resettiamo l'excel per un nuovo broadcast
-
-    contacts['Sent'] = 'no'
-
-    contacts.to_excel("Contacts.xlsx", index=False)
 
  
 
@@ -173,7 +181,6 @@ def show_broadcast_message():
    
 
     # Pianifica l'aggiornamento dell'interfaccia utente dopo il completamento del backend
-
     root.after(1000, update_ui_after_broadcast_sent)
 
  
@@ -187,6 +194,18 @@ def update_ui_after_broadcast_sent():
         widget.destroy()
 
     broadcast_label = ttk.Label(root, text="Invio broadcast completato! Grazie!", font=("Helvetica", 16, "bold"))
+
+    broadcast_label.pack(expand=True, padx=20, pady=20)
+
+def update_ui_after_broadcast_failed():
+
+    # Rimuove tutti i widget attuali dalla finestra dopo il completamento del backend
+
+    for widget in root.winfo_children():
+
+        widget.destroy()
+
+    broadcast_label = ttk.Label(root, text="Invio broadcast fallito! Contatta Edoardo", font=("Helvetica", 16, "bold"))
 
     broadcast_label.pack(expand=True, padx=20, pady=20)
 
@@ -303,3 +322,4 @@ root.mainloop()
 testo = ""
 
 nome_img = None
+
