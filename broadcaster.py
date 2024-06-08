@@ -5,6 +5,8 @@ import time
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk
+import pyautogui
+from pynput.keyboard import Key, Controller
 import threading
 
  
@@ -12,16 +14,16 @@ import threading
 # If no, add it manually
 def add_plus_if_missing(string):
 
-    if not string.startswith("+"):
+    if not string.startswith("+39"):
 
-        string = "+" + string
+        string = "+39" + string
 
     return string
 
 # fuction to get the path of the file
 def find_excel():
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, "Contacts.xlsx")
+        file_path = os.path.join(current_dir, "ContactsTest.xlsx")
         print(str(current_dir))
         return str(file_path)
 
@@ -42,6 +44,7 @@ def execute_backend():
     
 
         c = 0
+        keyboard = Controller()
 
         for num in list:
 
@@ -49,7 +52,11 @@ def execute_backend():
 
             num = add_plus_if_missing(num)
 
+
             print(num)
+  
+
+
 
             try:
 
@@ -57,9 +64,9 @@ def execute_backend():
 
                     if nome_img == None:
 
-                        if "cliente" in testo:
+                        if "nome_cliente" in testo:
 
-                            new_testo = testo.replace("cliente", contacts.iloc[c,0])
+                            new_testo = testo.replace("nome_cliente", contacts.iloc[c,1])
 
                         else:
 
@@ -79,23 +86,34 @@ def execute_backend():
 
                         # Invio immagine + messaggio di testo
 
-                        if "cliente" in testo:
+                        if "nome_cliente" in testo:
+  
 
-                            new_testo = testo.replace("cliente", contacts.iloc[c,0])
+
+                            new_testo = testo.replace("nome_cliente", contacts.iloc[c,1])
 
                         else:
+  
+
+  
 
                             new_testo = testo
-
-                        pywhatkit.sendwhats_image(num, nome_img, new_testo, 15, True, 16 )
+                        
+                        time.sleep(5)
+                        pywhatkit.sendwhats_image(num, nome_img, new_testo, 15, True, 10)
+                       
 
                     # il messaggio è stato inviato allo specifico utente, settiamo il flag a 'si'
 
                     contacts.at[c, "Sent"] = 'si'
+ 
+ 
+ 
+                    contacts.to_excel("ContactsTest.xlsx", index=False) 
 
-                    contacts.to_excel("Contacts.xlsx", index=False)
+                    time.sleep(30)  
 
-                    time.sleep(10)
+
 
             except Exception as e:
 
@@ -103,7 +121,7 @@ def execute_backend():
 
                 print(e)
 
-                contacts.to_excel("Contacts.xlsx", index=False)
+                contacts.to_excel("ContactsTest.xlsx", index=False)
 
             c += 1
 
@@ -111,7 +129,7 @@ def execute_backend():
 
         contacts['Sent'] = 'no'
 
-        contacts.to_excel("Contacts.xlsx", index=False)
+        contacts.to_excel("ContactsTest.xlsx", index=False)
         update_ui_after_broadcast_sent()
     except Exception as e:
         print(e)
@@ -170,7 +188,8 @@ def show_broadcast_message():
 
     broadcast_label = ttk.Label(root, text="Invio broadcast in corso...", font=("Helvetica", 16, "bold"))
 
-    broadcast_label.pack(expand=True, padx=20, pady=20)
+    broadcast_label.pack(expand=True, padx=20, pady=20)  
+
 
    
 
@@ -245,7 +264,7 @@ main_frame.pack(expand=True, fill="both")
 
 # Aggiunta del manuale utente
 
-manual_label = ttk.Label(main_frame, text="MANUALE UTENTE:\n- fare una prima connessione a whatsapp web col telefono aziendale. Una volta connesso, chiudere whatsapp web\n- il telefono deve essere connesso alla stessa rete internet del computer\n- nel testo, se si scrive la parola 'cliente', nel messaggio finale essa verrà sostituita con il nome della persona a cui si sta inviando il messaggio.\n Esempio: Ciao cliente --> Ciao Edoardo", font=("Helvetica", 12))
+manual_label = ttk.Label(main_frame, text="MANUALE UTENTE:\n- fare una prima connessione a whatsapp web col telefono aziendale. Una volta connesso, chiudere whatsapp web\n- il telefono deve essere connesso alla stessa rete internet del computer\n- nel testo, se si scrive la parola 'nome_cliente', nel messaggio finale essa verrà sostituita con il nome della persona a cui si sta inviando il messaggio.\n Esempio: Ciao cliente --> Ciao Edoardo", font=("Helvetica", 12))
 
 manual_label.grid(column=0, row=0, columnspan=2, padx=10, pady=10, sticky='W')
 
